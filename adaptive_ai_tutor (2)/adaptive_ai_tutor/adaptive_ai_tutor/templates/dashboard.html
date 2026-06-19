@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — AI Tutor</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #050510; color: #e8e8f0; min-height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 240px;
+    background: rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.07);
+    padding: 28px 20px; display: flex; flex-direction: column; z-index: 50;
+  }
+  .sidebar-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; margin-bottom: 36px; padding: 0 8px; }
+  .sidebar-logo span { color: #f5c842; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; border-radius: 12px; text-decoration: none;
+    color: #6666aa; font-size: 0.9rem; font-weight: 500;
+    transition: all 0.2s; margin-bottom: 4px;
+  }
+  .nav-item:hover, .nav-item.active { background: rgba(124,58,237,0.15); color: #e8e8f0; }
+  .nav-item.active { border-left: 3px solid #7c3aed; }
+  .nav-icon { font-size: 1.1rem; width: 22px; text-align: center; }
+  .sidebar-bottom { margin-top: auto; }
+  .logout-btn {
+    display: flex; align-items: center; gap: 12px; padding: 11px 14px;
+    border-radius: 12px; text-decoration: none; color: #ef4444; font-size: 0.9rem;
+    transition: background 0.2s; width: 100%;
+  }
+  .logout-btn:hover { background: rgba(239,68,68,0.1); }
+
+  /* MAIN */
+  .main { margin-left: 240px; padding: 36px 40px; min-height: 100vh; }
+
+  /* TOPBAR */
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 36px; }
+  .topbar h1 { font-family: 'Syne', sans-serif; font-size: 1.7rem; font-weight: 800; }
+  .topbar h1 span { color: #f5c842; }
+  .level-badge {
+    background: rgba(124,58,237,0.2); border: 1px solid rgba(124,58,237,0.4);
+    color: #c4b5fd; padding: 6px 16px; border-radius: 100px; font-size: 0.82rem; font-weight: 600;
+  }
+
+  /* STAT CARDS */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 32px; }
+  .stat-card {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px; padding: 24px 20px; transition: 0.3s;
+  }
+  .stat-card:hover { transform: translateY(-4px); border-color: rgba(124,58,237,0.3); }
+  .stat-card-label { font-size: 0.78rem; color: #6666aa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .stat-card-value { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; }
+  .stat-card-sub { font-size: 0.8rem; color: #6666aa; margin-top: 4px; }
+  .green { color: #22c55e; } .gold { color: #f5c842; } .violet { color: #a78bfa; } .orange { color: #f97316; }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 28px; }
+
+  /* CARD */
+  .card {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px; padding: 26px;
+  }
+  .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 20px; }
+
+  /* SUBJECT CARDS */
+  .subject-card {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px; padding: 24px; transition: all 0.3s; text-decoration: none; color: inherit;
+    display: block;
+  }
+  .subject-card:hover { transform: translateY(-6px); border-color: rgba(245,200,66,0.4); background: rgba(245,200,66,0.05); }
+  .subj-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .subj-icon { font-size: 2rem; }
+  .subj-level { font-size: 0.75rem; background: rgba(124,58,237,0.2); color: #c4b5fd; padding: 4px 10px; border-radius: 100px; }
+  .subj-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.05rem; margin-bottom: 4px; }
+  .subj-desc { font-size: 0.82rem; color: #6666aa; margin-bottom: 16px; }
+  .progress-bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+  .bar-green { background: linear-gradient(90deg, #22c55e, #4ade80); }
+  .bar-blue  { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+  .bar-orange { background: linear-gradient(90deg, #f97316, #fb923c); }
+  .progress-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: #6666aa; margin-top: 6px; }
+
+  /* HISTORY TABLE */
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #44446a; padding-bottom: 12px; font-weight: 600; }
+  td { padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.05); font-size: 0.88rem; color: #9999cc; }
+  td:first-child { color: #e8e8f0; font-weight: 500; }
+  .badge-pill { display: inline-block; padding: 3px 10px; border-radius: 100px; font-size: 0.75rem; font-weight: 600; }
+  .badge-green { background: rgba(34,197,94,0.15); color: #4ade80; }
+  .badge-yellow { background: rgba(234,179,8,0.15); color: #facc15; }
+  .badge-red { background: rgba(239,68,68,0.15); color: #f87171; }
+
+  /* QUICK ACTIONS */
+  .action-btn {
+    display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px; text-decoration: none; color: #e8e8f0;
+    transition: all 0.2s; font-size: 0.9rem;
+  }
+  .action-btn:hover { background: rgba(124,58,237,0.12); border-color: rgba(124,58,237,0.3); transform: translateX(4px); }
+  .action-icon { font-size: 1.3rem; width: 30px; text-align: center; }
+  .action-label { flex: 1; }
+  .action-arrow { color: #44446a; font-size: 0.85rem; }
+  .actions-list { display: flex; flex-direction: column; gap: 10px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">🤖 Adaptive <span>Learning Platform</span></div>
+  <nav>
+    <a href="{{ url_for('dashboard') }}" class="nav-item active"><span class="nav-icon">🏠</span> Dashboard</a>
+    <a href="{{ url_for('courses') }}" class="nav-item"><span class="nav-icon">📚</span> Courses</a>
+    <a href="{{ url_for('progress') }}" class="nav-item"><span class="nav-icon">📊</span> Progress</a>
+    <a href="{{ url_for('analytics') }}" class="nav-item"><span class="nav-icon">📈</span> Analytics</a>
+    <a href="{{ url_for('weak') }}" class="nav-item"><span class="nav-icon">🎯</span> Weak Areas</a>
+    <a href="{{ url_for('leaderboard') }}" class="nav-item"><span class="nav-icon">🏆</span> Leaderboard</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <a href="{{ url_for('logout') }}" class="logout-btn"><span>🚪</span> Logout</a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <h1>Welcome back, <span>{{ user }}</span> 👋</h1>
+    <span class="level-badge">Overall Score: {{ overall }}%</span>
+  </div>
+
+  <!-- STATS -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-card-label">Overall Score</div>
+      <div class="stat-card-value gold">{{ overall }}%</div>
+      <div class="stat-card-sub">Across all subjects</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Aptitude</div>
+      <div class="stat-card-value green">{{ data.aptitude.score }}%</div>
+      <div class="stat-card-sub">Level {{ data.aptitude.level }} / 3</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Total Attempts</div>
+      <div class="stat-card-value violet">{{ total_attempts }}</div>
+      <div class="stat-card-sub">Quizzes completed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Best Score</div>
+      <div class="stat-card-value orange">{{ data.aptitude.best_score }}%</div>
+      <div class="stat-card-sub">Personal best</div>
+    </div>
+  </div>
+
+  <!-- SUBJECTS + QUICK ACTIONS -->
+  <div class="grid-2">
+    <!-- Subject Progress -->
+    <div class="card">
+      <div class="card-title">📚 My Courses</div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <a href="{{ url_for('aptitude') }}" class="subject-card">
+          <div class="subj-header">
+            <span class="subj-icon">🧠</span>
+            <span class="subj-level">Level {{ data.aptitude.level }}/3</span>
+          </div>
+          <div class="subj-name">Aptitude</div>
+          <div class="subj-desc">Quantitative & Logical Reasoning</div>
+          <div class="progress-bar"><div class="progress-fill bar-green" style="width:{{ data.aptitude.score }}%"></div></div>
+          <div class="progress-label"><span>{{ data.aptitude.score }}% accuracy</span><span>{{ data.aptitude.attempts }} attempts</span></div>
+        </a>
+
+        <div class="subject-card" style="opacity:0.6;cursor:not-allowed;">
+          <div class="subj-header">
+            <span class="subj-icon">🐍</span>
+            <span class="subj-level" style="background:rgba(107,114,128,0.2);color:#9ca3af;">Coming Soon</span>
+          </div>
+          <div class="subj-name">Python</div>
+          <div class="subj-desc">Programming Essentials</div>
+          <div class="progress-bar"><div class="progress-fill bar-blue" style="width:0%"></div></div>
+          <div class="progress-label"><span>Not started</span><span>0 attempts</span></div>
+        </div>
+
+        <div class="subject-card" style="opacity:0.6;cursor:not-allowed;">
+          <div class="subj-header">
+            <span class="subj-icon">💻</span>
+            <span class="subj-level" style="background:rgba(107,114,128,0.2);color:#9ca3af;">Coming Soon</span>
+          </div>
+          <div class="subj-name">HTML & Web Dev</div>
+          <div class="subj-desc">Frontend Fundamentals</div>
+          <div class="progress-bar"><div class="progress-fill bar-orange" style="width:0%"></div></div>
+          <div class="progress-label"><span>Not started</span><span>0 attempts</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions + Chart -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+      <div class="card">
+        <div class="card-title">⚡ Quick Actions</div>
+        <div class="actions-list">
+          <a href="{{ url_for('aptitude') }}" class="action-btn">
+            <span class="action-icon">🧠</span>
+            <span class="action-label">Start Aptitude Quiz</span>
+            <span class="action-arrow">→</span>
+          </a>
+          <a href="{{ url_for('progress') }}" class="action-btn">
+            <span class="action-icon">📊</span>
+            <span class="action-label">View Full Progress</span>
+            <span class="action-arrow">→</span>
+          </a>
+          <a href="{{ url_for('weak') }}" class="action-btn">
+            <span class="action-icon">🎯</span>
+            <span class="action-label">Weak Area Report</span>
+            <span class="action-arrow">→</span>
+          </a>
+          <a href="{{ url_for('leaderboard') }}" class="action-btn">
+            <span class="action-icon">🏆</span>
+            <span class="action-label">Leaderboard</span>
+            <span class="action-arrow">→</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📈 Score Overview</div>
+        <canvas id="overviewChart" height="150"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECENT HISTORY -->
+  <div class="card">
+    <div class="card-title">🕐 Recent Quiz History</div>
+    {% if history %}
+    <table>
+      <tr>
+        <th>Subject</th>
+        <th>Score</th>
+        <th>Accuracy</th>
+        <th>Difficulty</th>
+        <th>Time</th>
+        <th>Date</th>
+      </tr>
+      {% for h in history %}
+      <tr>
+        <td>{{ h[0]|capitalize }}</td>
+        <td>{{ h[1] }}/{{ h[2] }}</td>
+        <td>
+          <span class="badge-pill {% if h[3] >= 80 %}badge-green{% elif h[3] >= 50 %}badge-yellow{% else %}badge-red{% endif %}">
+            {{ h[3] }}%
+          </span>
+        </td>
+        <td>Level {{ h[4] }}</td>
+        <td>{{ h[5] }}s</td>
+        <td style="color:#44446a;">{{ h[6][:10] }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p style="color:#44446a;text-align:center;padding:24px;">No quizzes completed yet. <a href="{{ url_for('aptitude') }}" style="color:#f5c842;">Start your first quiz →</a></p>
+    {% endif %}
+  </div>
+
+</main>
+
+<script>
+const ctx = document.getElementById('overviewChart').getContext('2d');
+new Chart(ctx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Aptitude','Python','HTML'],
+    datasets: [{
+      data: [{{ data.aptitude.score }}, {{ data.python.score }}, {{ data.html.score }}],
+      backgroundColor: ['rgba(34,197,94,0.8)','rgba(59,130,246,0.8)','rgba(249,115,22,0.8)'],
+      borderColor: ['#22c55e','#3b82f6','#f97316'],
+      borderWidth: 2
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { labels: { color: '#9999cc', font: { family: 'DM Sans' } } }
+    },
+    cutout: '65%'
+  }
+});
+</script>
+</body>
+</html>

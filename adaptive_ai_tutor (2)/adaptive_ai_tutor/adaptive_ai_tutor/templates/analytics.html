@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics — AI Tutor</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #050510; color: #e8e8f0; min-height: 100vh; }
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 240px; background: rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.07); padding: 28px 20px; display: flex; flex-direction: column; z-index: 50; }
+  .sidebar-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; margin-bottom: 36px; padding: 0 8px; }
+  .sidebar-logo span { color: #f5c842; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 12px; text-decoration: none; color: #6666aa; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; margin-bottom: 4px; }
+  .nav-item:hover, .nav-item.active { background: rgba(124,58,237,0.15); color: #e8e8f0; }
+  .nav-item.active { border-left: 3px solid #7c3aed; }
+  .nav-icon { font-size: 1.1rem; width: 22px; text-align: center; }
+  .sidebar-bottom { margin-top: auto; }
+  .logout-btn { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 12px; text-decoration: none; color: #ef4444; font-size: 0.9rem; }
+  .logout-btn:hover { background: rgba(239,68,68,0.1); }
+  .main { margin-left: 240px; padding: 36px 40px; }
+  .page-header { margin-bottom: 32px; }
+  .page-header h1 { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; margin-bottom: 6px; }
+  .page-header p { color: #6666aa; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; margin-bottom: 28px; }
+  .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 28px; }
+  .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 20px; }
+  .card-full { margin-bottom: 24px; }
+
+  .kpi-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 22px 18px; }
+  .kpi-icon { font-size: 1.6rem; margin-bottom: 10px; }
+  .kpi-val { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; margin-bottom: 4px; }
+  .kpi-label { font-size: 0.78rem; color: #44446a; }
+
+  .insight-list { display: flex; flex-direction: column; gap: 12px; }
+  .insight-item {
+    display: flex; align-items: flex-start; gap: 14px; padding: 16px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+  }
+  .insight-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 2px; }
+  .insight-text { font-size: 0.88rem; color: #9999cc; line-height: 1.55; }
+  .insight-text strong { color: #e8e8f0; }
+
+  .empty-state { text-align: center; padding: 40px; color: #44446a; }
+  .empty-state a { color: #f5c842; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">🤖 Adaptive <span>Learning Platform</span></div>
+  <nav>
+    <a href="{{ url_for('dashboard') }}" class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
+    <a href="{{ url_for('courses') }}" class="nav-item"><span class="nav-icon">📚</span> Courses</a>
+    <a href="{{ url_for('progress') }}" class="nav-item"><span class="nav-icon">📊</span> Progress</a>
+    <a href="{{ url_for('analytics') }}" class="nav-item active"><span class="nav-icon">📈</span> Analytics</a>
+    <a href="{{ url_for('weak') }}" class="nav-item"><span class="nav-icon">🎯</span> Weak Areas</a>
+    <a href="{{ url_for('leaderboard') }}" class="nav-item"><span class="nav-icon">🏆</span> Leaderboard</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <a href="{{ url_for('logout') }}" class="logout-btn"><span>🚪</span> Logout</a>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="page-header">
+    <h1>📈 Analytics</h1>
+    <p>Deep dive into your performance trends</p>
+  </div>
+
+  <!-- KPIs -->
+  {% set total_att = data.aptitude.attempts + data.python.attempts + data.html.attempts %}
+  {% set avg_score = ((data.aptitude.score + data.python.score + data.html.score) / 3)|round(1) %}
+  {% set avg_time = data.aptitude.time if data.aptitude.attempts > 0 else 0 %}
+
+  <div class="grid-4">
+    <div class="kpi-card">
+      <div class="kpi-icon">📝</div>
+      <div class="kpi-val" style="color:#f5c842;">{{ total_att }}</div>
+      <div class="kpi-label">Total Quizzes Taken</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">🎯</div>
+      <div class="kpi-val" style="color:#22c55e;">{{ avg_score }}%</div>
+      <div class="kpi-label">Average Accuracy</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">⏱️</div>
+      <div class="kpi-val" style="color:#a78bfa;">{{ avg_time }}s</div>
+      <div class="kpi-label">Total Time Spent</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">🏅</div>
+      <div class="kpi-val" style="color:#f97316;">{{ data.aptitude.best_score }}%</div>
+      <div class="kpi-label">Personal Best</div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📉 Score Trend (Aptitude)</div>
+      {% if history %}
+      <canvas id="trendChart" height="220"></canvas>
+      {% else %}
+      <div class="empty-state">No data yet. <a href="{{ url_for('aptitude') }}">Take a quiz →</a></div>
+      {% endif %}
+    </div>
+    <div class="card">
+      <div class="card-title">⚡ Speed vs Accuracy</div>
+      {% if history %}
+      <canvas id="bubbleChart" height="220"></canvas>
+      {% else %}
+      <div class="empty-state">No data yet. <a href="{{ url_for('aptitude') }}">Take a quiz →</a></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- DIFFICULTY PROGRESSION -->
+  <div class="card card-full">
+    <div class="card-title">🎚️ Difficulty Progression</div>
+    {% if history %}
+    <canvas id="levelChart" height="120"></canvas>
+    {% else %}
+    <div class="empty-state">Complete at least one quiz to see difficulty progression.</div>
+    {% endif %}
+  </div>
+
+  <!-- AI INSIGHTS -->
+  <div class="card card-full">
+    <div class="card-title">🤖 AI Insights</div>
+    <div class="insight-list">
+      {% if total_att == 0 %}
+      <div class="insight-item">
+        <div class="insight-icon">ℹ️</div>
+        <div class="insight-text"><strong>No data yet</strong> — Complete your first quiz to unlock AI insights about your learning patterns.</div>
+      </div>
+      {% else %}
+        {% if data.aptitude.score >= 80 %}
+        <div class="insight-item">
+          <div class="insight-icon">🌟</div>
+          <div class="insight-text"><strong>High Performer:</strong> Your aptitude score of {{ data.aptitude.score }}% is excellent! You're operating at Level {{ data.aptitude.level }}. Push for Level 3 to challenge yourself further.</div>
+        </div>
+        {% elif data.aptitude.score >= 50 %}
+        <div class="insight-item">
+          <div class="insight-icon">📈</div>
+          <div class="insight-text"><strong>Growing Steadily:</strong> Your {{ data.aptitude.score }}% average shows good progress. Focus on consistency — try to score above 80% in your next 3 attempts.</div>
+        </div>
+        {% else %}
+        <div class="insight-item">
+          <div class="insight-icon">🔄</div>
+          <div class="insight-text"><strong>Building Foundation:</strong> A {{ data.aptitude.score }}% average means there are fundamentals to revisit. The adaptive engine has reduced difficulty to help — use this to rebuild confidence.</div>
+        </div>
+        {% endif %}
+
+        {% if data.aptitude.attempts >= 3 %}
+        <div class="insight-item">
+          <div class="insight-icon">💪</div>
+          <div class="insight-text"><strong>Consistent Learner:</strong> {{ data.aptitude.attempts }} attempts shows great dedication. Students who practice daily improve 3× faster than those who practice weekly.</div>
+        </div>
+        {% endif %}
+
+        <div class="insight-item">
+          <div class="insight-icon">🎯</div>
+          <div class="insight-text"><strong>Adaptive Level:</strong> You're currently at <strong>Level {{ data.aptitude.level }}/3</strong>.
+          {% if data.aptitude.level == 1 %}Score above 80% to unlock Level 2 — Intermediate challenges.
+          {% elif data.aptitude.level == 2 %}Score above 80% to unlock Level 3 — Advanced problems!
+          {% else %}You're at the highest level. Maintain your performance!{% endif %}</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</main>
+
+<script>
+{% if history %}
+// Build chart data from history
+const historyData = [
+  {% for h in history|reverse %}
+  { accuracy: {{ h[3] }}, difficulty: {{ h[4] }}, time: {{ h[5] }}, date: "{{ h[6][:10] }}" }{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+const labels = historyData.map((d,i) => 'Quiz ' + (i+1));
+const accuracies = historyData.map(d => d.accuracy);
+const difficulties = historyData.map(d => d.difficulty);
+const times = historyData.map(d => d.time);
+
+const sharedGrid = { color: 'rgba(255,255,255,0.04)' };
+const sharedTick = { color: '#44446a' };
+
+// Trend chart
+new Chart(document.getElementById('trendChart').getContext('2d'), {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [{
+      label: 'Accuracy %',
+      data: accuracies,
+      borderColor: '#7c3aed',
+      backgroundColor: 'rgba(124,58,237,0.1)',
+      fill: true, tension: 0.4,
+      pointBackgroundColor: '#a855f7',
+      pointRadius: 5
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: { min: 0, max: 100, ticks: sharedTick, grid: sharedGrid },
+      x: { ticks: sharedTick, grid: { display: false } }
+    },
+    plugins: { legend: { labels: { color: '#9999cc' } } }
+  }
+});
+
+// Bubble chart (speed vs accuracy)
+new Chart(document.getElementById('bubbleChart').getContext('2d'), {
+  type: 'bubble',
+  data: {
+    datasets: [{
+      label: 'Attempts',
+      data: historyData.map((d,i) => ({ x: d.time, y: d.accuracy, r: 8 })),
+      backgroundColor: 'rgba(245,200,66,0.6)',
+      borderColor: '#f5c842'
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      x: { title: { display: true, text: 'Time (s)', color: '#44446a' }, ticks: sharedTick, grid: sharedGrid },
+      y: { min: 0, max: 100, title: { display: true, text: 'Accuracy %', color: '#44446a' }, ticks: sharedTick, grid: sharedGrid }
+    },
+    plugins: { legend: { labels: { color: '#9999cc' } } }
+  }
+});
+
+// Level chart
+new Chart(document.getElementById('levelChart').getContext('2d'), {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [{
+      label: 'Difficulty Level',
+      data: difficulties,
+      borderColor: '#22c55e',
+      backgroundColor: 'rgba(34,197,94,0.08)',
+      fill: true, tension: 0.3,
+      stepped: true,
+      pointBackgroundColor: '#4ade80',
+      pointRadius: 5
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: { min: 0, max: 3, ticks: { ...sharedTick, stepSize: 1, callback: v => ['','Easy','Medium','Hard'][v] || '' }, grid: sharedGrid },
+      x: { ticks: sharedTick, grid: { display: false } }
+    },
+    plugins: { legend: { labels: { color: '#9999cc' } } }
+  }
+});
+{% endif %}
+</script>
+</body>
+</html>
