@@ -1,11 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+import os
 import sqlite3
 import json
 import time
 import random
 
 app = Flask(__name__)
-app.secret_key = "adaptive_ai_tutor_secret_2024"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
 # ─────────────────────────────────────────────
 #  DATABASE INIT
