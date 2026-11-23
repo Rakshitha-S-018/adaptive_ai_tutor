@@ -88,3 +88,6 @@ The main objective of Adaptive AI Tutor is to improve the learning experience by
 **Project Name:** Adaptive AI Tutor
 
 **Category:** Artificial Intelligence / Web Development
+
+## Live Demo
+[Click here to view Adaptive AI Tutor](https://adaptive-ai-tutor-ouf2.onrender.com)
