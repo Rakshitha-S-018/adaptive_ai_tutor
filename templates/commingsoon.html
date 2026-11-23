@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ course }} — Coming Soon</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: #050510; color: #e8e8f0; padding: 40px 20px;
+  }
+  .orb { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+  .orb-1 { width: 400px; height: 400px; background: radial-gradient(circle, #7c3aed33, transparent); top: -80px; left: -80px; }
+  .orb-2 { width: 350px; height: 350px; background: radial-gradient(circle, #f5c84222, transparent); bottom: -60px; right: -60px; }
+
+  .card {
+    position: relative; z-index: 1; max-width: 500px; width: 100%;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 28px; padding: 56px 44px; text-align: center;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.4); animation: popIn 0.5s ease both;
+  }
+  @keyframes popIn { from { opacity:0; transform:scale(0.9); } to { opacity:1; transform:scale(1); } }
+
+  .emoji { font-size: 4rem; margin-bottom: 20px; display: block; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+
+  h1 { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; margin-bottom: 10px; }
+  .sub { color: #6666aa; margin-bottom: 32px; line-height: 1.6; }
+
+  .features { text-align: left; margin-bottom: 36px; display: flex; flex-direction: column; gap: 12px; }
+  .feat { display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; font-size: 0.88rem; color: #9999cc; }
+  .feat span:first-child { font-size: 1.1rem; }
+
+  .back-btn {
+    display: inline-block; padding: 14px 32px;
+    background: #f5c842; color: #000; font-family: 'Syne', sans-serif; font-weight: 700;
+    text-decoration: none; border-radius: 100px; font-size: 0.95rem;
+    box-shadow: 0 0 20px rgba(245,200,66,0.25); transition: all 0.2s;
+  }
+  .back-btn:hover { transform: translateY(-2px); box-shadow: 0 0 35px rgba(245,200,66,0.45); }
+</style>
+</head>
+<body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="card">
+  <span class="emoji">🚧</span>
+  <h1>{{ course }}</h1>
+  <p class="sub">This course is under active development and will be available soon. Here's what to expect:</p>
+
+  <div class="features">
+    <div class="feat"><span>🎥</span><span>Lesson videos before each quiz</span></div>
+    <div class="feat"><span>🧠</span><span>Adaptive difficulty based on your score</span></div>
+    <div class="feat"><span>📊</span><span>Detailed performance tracking</span></div>
+    <div class="feat"><span>🤖</span><span>AI-powered weak area detection</span></div>
+  </div>
+
+  <a href="{{ url_for('courses') }}" class="back-btn">← Back to Courses</a>
+</div>
+</body>
+</html>

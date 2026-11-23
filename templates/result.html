@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Result — AI Tutor</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: #050510; color: #e8e8f0; padding: 40px 20px;
+  }
+  .orb { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+  .orb-1 { width: 500px; height: 500px; top: -100px; left: -100px; }
+  .orb-pass { background: radial-gradient(circle, #22c55e33, transparent); }
+  .orb-fail { background: radial-gradient(circle, #ef444433, transparent); }
+  .orb-avg  { background: radial-gradient(circle, #f9731633, transparent); }
+  .orb-2 { width: 400px; height: 400px; background: radial-gradient(circle, #7c3aed22, transparent); bottom: -80px; right: -80px; }
+
+  .result-card {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 520px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 28px; padding: 48px 40px; text-align: center;
+    backdrop-filter: blur(20px); box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+    animation: popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275) both;
+  }
+  @keyframes popIn { from { opacity:0; transform:scale(0.85); } to { opacity:1; transform:scale(1); } }
+
+  .result-emoji { font-size: 4rem; margin-bottom: 16px; animation: bounce 0.6s 0.4s ease both; }
+  @keyframes bounce { from { transform:scale(0); } 60% { transform:scale(1.2); } to { transform:scale(1); } }
+
+  .result-title { font-family: 'Syne', sans-serif; font-size: 1.7rem; font-weight: 800; margin-bottom: 6px; }
+  .result-sub { color: #6666aa; margin-bottom: 36px; font-size: 0.9rem; }
+
+  .score-ring {
+    width: 150px; height: 150px; border-radius: 50%; margin: 0 auto 32px;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    border: 5px solid rgba(255,255,255,0.06); position: relative;
+  }
+  .score-ring::before {
+    content: ''; position: absolute; inset: -5px; border-radius: 50%;
+    background: conic-gradient(var(--ring-color) var(--ring-pct), rgba(255,255,255,0.06) 0);
+    mask: radial-gradient(farthest-side, transparent calc(100% - 8px), #000 0);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 8px), #000 0);
+  }
+  .score-pct { font-family: 'Syne', sans-serif; font-size: 2.4rem; font-weight: 800; }
+  .score-label { font-size: 0.75rem; color: #6666aa; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 28px; }
+  .stat-box {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px; padding: 16px 10px;
+  }
+  .stat-box-val { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; }
+  .stat-box-label { font-size: 0.72rem; color: #44446a; margin-top: 4px; }
+
+  .level-change {
+    background: rgba(124,58,237,0.12); border: 1px solid rgba(124,58,237,0.3);
+    border-radius: 14px; padding: 16px 20px; margin-bottom: 28px;
+    font-size: 0.9rem; color: #c4b5fd;
+  }
+  .level-change strong { color: #f5c842; }
+
+  .tip-box {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px; padding: 16px 20px; margin-bottom: 28px;
+    text-align: left; font-size: 0.87rem; color: #9999cc; line-height: 1.6;
+  }
+  .tip-box strong { color: #e8e8f0; display: block; margin-bottom: 4px; }
+
+  .btn-group { display: flex; gap: 12px; }
+  .btn-primary {
+    flex: 1; padding: 14px; background: #f5c842; color: #000;
+    font-family: 'Syne', sans-serif; font-weight: 700; border: none;
+    border-radius: 12px; text-decoration: none; text-align: center;
+    box-shadow: 0 0 20px rgba(245,200,66,0.25); transition: all 0.2s; font-size: 0.9rem;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 35px rgba(245,200,66,0.45); }
+  .btn-outline {
+    flex: 1; padding: 14px; border: 1.5px solid rgba(255,255,255,0.12);
+    color: #e8e8f0; text-decoration: none; text-align: center;
+    border-radius: 12px; transition: all 0.2s; font-size: 0.9rem;
+    background: rgba(255,255,255,0.04);
+  }
+  .btn-outline:hover { border-color: rgba(255,255,255,0.25); }
+</style>
+</head>
+<body>
+
+{% if accuracy >= 80 %}
+<div class="orb orb-1 orb-pass"></div>
+{% elif accuracy >= 50 %}
+<div class="orb orb-1 orb-avg"></div>
+{% else %}
+<div class="orb orb-1 orb-fail"></div>
+{% endif %}
+<div class="orb orb-2"></div>
+
+<div class="result-card">
+
+  <div class="result-emoji">
+    {% if accuracy >= 80 %}🎉{% elif accuracy >= 50 %}👍{% else %}💪{% endif %}
+  </div>
+  <div class="result-title">
+    {% if accuracy >= 80 %}Excellent Work!{% elif accuracy >= 50 %}Good Effort!{% else %}Keep Practising!{% endif %}
+  </div>
+  <div class="result-sub">{{ subject }} Quiz Completed</div>
+
+  <div class="score-ring"
+    style="--ring-color: {% if accuracy >= 80 %}#22c55e{% elif accuracy >= 50 %}#f97316{% else %}#ef4444{% endif %};
+           --ring-pct: {{ accuracy }}%;">
+    <div class="score-pct" style="color: {% if accuracy >= 80 %}#22c55e{% elif accuracy >= 50 %}#f97316{% else %}#ef4444{% endif %};">
+      {{ accuracy }}%
+    </div>
+    <div class="score-label">accuracy</div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-box-val" style="color:#f5c842;">{{ score }}/{{ total }}</div>
+      <div class="stat-box-label">Correct</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-box-val" style="color:#a78bfa;">{{ time_taken }}s</div>
+      <div class="stat-box-label">Time Taken</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-box-val" style="color:#22c55e;">Lvl {{ new_level }}</div>
+      <div class="stat-box-label">New Level</div>
+    </div>
+  </div>
+
+  <div class="level-change">
+    🎯 Adaptive Engine Update: Your next quiz will be at
+    <strong>Level {{ new_level }} ({% if new_level == 1 %}Beginner{% elif new_level == 2 %}Intermediate{% else %}Advanced{% endif %})</strong>
+    {% if accuracy >= 80 %} — difficulty increased!
+    {% elif accuracy < 40 %} — difficulty reduced to rebuild fundamentals.
+    {% else %} — difficulty maintained. Keep going!{% endif %}
+  </div>
+
+  <div class="tip-box">
+    <strong>🤖 AI Tip</strong>
+    {% if accuracy >= 80 %}
+      Outstanding! Push yourself with harder problems. Try Level 3 challenges to master advanced concepts.
+    {% elif accuracy >= 50 %}
+      Solid foundation! Focus on the types of questions you got wrong. Review those topics before the next attempt.
+    {% else %}
+      Don't worry — struggle is where learning happens. Re-watch the lesson video and try again slowly.
+    {% endif %}
+  </div>
+
+  <div class="btn-group">
+    <a href="{{ url_for('aptitude') }}" class="btn-primary">Retry Quiz 🔁</a>
+    <a href="{{ url_for('dashboard') }}" class="btn-outline">Dashboard →</a>
+  </div>
+
+</div>
+</body>
+</html>

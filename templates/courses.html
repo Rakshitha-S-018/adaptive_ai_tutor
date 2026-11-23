@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Courses — AI Tutor</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #050510; color: #e8e8f0; min-height: 100vh; }
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 240px;
+    background: rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.07);
+    padding: 28px 20px; display: flex; flex-direction: column; z-index: 50;
+  }
+  .sidebar-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; margin-bottom: 36px; padding: 0 8px; }
+  .sidebar-logo span { color: #f5c842; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px; padding: 11px 14px;
+    border-radius: 12px; text-decoration: none; color: #6666aa; font-size: 0.9rem;
+    font-weight: 500; transition: all 0.2s; margin-bottom: 4px;
+  }
+  .nav-item:hover, .nav-item.active { background: rgba(124,58,237,0.15); color: #e8e8f0; }
+  .nav-item.active { border-left: 3px solid #7c3aed; }
+  .nav-icon { font-size: 1.1rem; width: 22px; text-align: center; }
+  .sidebar-bottom { margin-top: auto; }
+  .logout-btn { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 12px; text-decoration: none; color: #ef4444; font-size: 0.9rem; }
+  .logout-btn:hover { background: rgba(239,68,68,0.1); }
+  .main { margin-left: 240px; padding: 36px 40px; }
+  .page-header { margin-bottom: 36px; }
+  .page-header h1 { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; margin-bottom: 6px; }
+  .page-header p { color: #6666aa; }
+
+  .courses-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .course-card {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 22px; padding: 32px 28px; position: relative; overflow: hidden;
+    transition: all 0.35s; text-decoration: none; color: inherit; display: block;
+  }
+  .course-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    border-radius: 22px 22px 0 0; transition: opacity 0.3s;
+  }
+  .card-aptitude::before { background: linear-gradient(90deg, #7c3aed, #a855f7); }
+  .card-python::before { background: linear-gradient(90deg, #3b82f6, #06b6d4); }
+  .card-html::before { background: linear-gradient(90deg, #f97316, #f59e0b); }
+  .course-card:hover { transform: translateY(-8px); border-color: rgba(255,255,255,0.18); }
+  .card-aptitude:hover { box-shadow: 0 20px 50px rgba(124,58,237,0.15); }
+
+  .course-icon { font-size: 3rem; margin-bottom: 18px; }
+  .course-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; margin-bottom: 8px; }
+  .course-desc { color: #6666aa; font-size: 0.88rem; line-height: 1.6; margin-bottom: 20px; }
+
+  .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 24px; }
+  .tag { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 100px; font-size: 0.75rem; color: #9999cc; }
+
+  .progress-row { margin-bottom: 20px; }
+  .progress-row-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: #6666aa; margin-bottom: 6px; }
+  .progress-bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; }
+  .fill-violet { background: linear-gradient(90deg, #7c3aed, #a855f7); }
+  .fill-blue   { background: linear-gradient(90deg, #3b82f6, #06b6d4); }
+  .fill-orange { background: linear-gradient(90deg, #f97316, #f59e0b); }
+
+  .course-btn {
+    display: block; text-align: center; padding: 13px;
+    border-radius: 12px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem;
+    text-decoration: none; transition: all 0.2s; border: none; cursor: pointer; width: 100%;
+  }
+  .btn-active { background: #f5c842; color: #000; box-shadow: 0 0 20px rgba(245,200,66,0.25); }
+  .btn-active:hover { box-shadow: 0 0 35px rgba(245,200,66,0.45); transform: scale(1.02); }
+  .btn-soon { background: rgba(255,255,255,0.05); color: #44446a; border: 1px solid rgba(255,255,255,0.08); cursor: not-allowed; }
+
+  .coming-overlay {
+    position: absolute; top: 14px; right: 14px;
+    background: rgba(107,114,128,0.2); border: 1px solid rgba(255,255,255,0.08);
+    color: #9ca3af; padding: 4px 12px; border-radius: 100px; font-size: 0.73rem; font-weight: 600;
+  }
+  .available-tag {
+    position: absolute; top: 14px; right: 14px;
+    background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3);
+    color: #4ade80; padding: 4px 12px; border-radius: 100px; font-size: 0.73rem; font-weight: 600;
+  }
+
+  .stats-row { display: flex; gap: 16px; margin-bottom: 20px; }
+  .mini-stat { flex: 1; background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px; text-align: center; }
+  .mini-stat-val { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; }
+  .mini-stat-label { font-size: 0.7rem; color: #44446a; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">🤖 Adaptive <span>Learning Platform</span></div>
+  <nav>
+    <a href="{{ url_for('dashboard') }}" class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
+    <a href="{{ url_for('courses') }}" class="nav-item active"><span class="nav-icon">📚</span> Courses</a>
+    <a href="{{ url_for('progress') }}" class="nav-item"><span class="nav-icon">📊</span> Progress</a>
+    <a href="{{ url_for('analytics') }}" class="nav-item"><span class="nav-icon">📈</span> Analytics</a>
+    <a href="{{ url_for('weak') }}" class="nav-item"><span class="nav-icon">🎯</span> Weak Areas</a>
+    <a href="{{ url_for('leaderboard') }}" class="nav-item"><span class="nav-icon">🏆</span> Leaderboard</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <a href="{{ url_for('logout') }}" class="logout-btn"><span>🚪</span> Logout</a>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="page-header">
+    <h1>📚 My Courses</h1>
+    <p>Choose a course and start your adaptive learning session</p>
+  </div>
+
+  <div class="courses-grid">
+
+    <!-- APTITUDE -->
+    <a href="{{ url_for('aptitude') }}" class="course-card card-aptitude">
+      <span class="available-tag">✓ Available</span>
+      <div class="course-icon">🧠</div>
+      <div class="course-name">Aptitude</div>
+      <div class="course-desc">Master quantitative reasoning, arithmetic, ratios, percentages and logical problem solving.</div>
+      <div class="tag-list">
+        <span class="tag">Percentages</span>
+        <span class="tag">Ratios</span>
+        <span class="tag">Profit & Loss</span>
+        <span class="tag">Speed & Time</span>
+        <span class="tag">Arithmetic</span>
+      </div>
+      <div class="stats-row">
+        <div class="mini-stat">
+          <div class="mini-stat-val" style="color:#22c55e;">{{ data.aptitude.score }}%</div>
+          <div class="mini-stat-label">Score</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-val" style="color:#a78bfa;">{{ data.aptitude.level }}/3</div>
+          <div class="mini-stat-label">Level</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-val" style="color:#f5c842;">{{ data.aptitude.attempts }}</div>
+          <div class="mini-stat-label">Attempts</div>
+        </div>
+      </div>
+      <div class="progress-row">
+        <div class="progress-row-label"><span>Progress</span><span>{{ data.aptitude.score }}%</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-violet" style="width:{{ data.aptitude.score }}%"></div></div>
+      </div>
+      <div class="course-btn btn-active">Start Quiz →</div>
+    </a>
+
+    <!-- PYTHON -->
+    <div class="course-card card-python">
+      <span class="coming-overlay">Coming Soon</span>
+      <div class="course-icon">🐍</div>
+      <div class="course-name">Python Programming</div>
+      <div class="course-desc">Learn Python from scratch — variables, functions, loops, data structures, and real projects.</div>
+      <div class="tag-list">
+        <span class="tag">Variables</span>
+        <span class="tag">Functions</span>
+        <span class="tag">Loops</span>
+        <span class="tag">Lists</span>
+        <span class="tag">OOP</span>
+      </div>
+      <div class="stats-row">
+        <div class="mini-stat"><div class="mini-stat-val" style="color:#6666aa;">—</div><div class="mini-stat-label">Score</div></div>
+        <div class="mini-stat"><div class="mini-stat-val" style="color:#6666aa;">—</div><div class="mini-stat-label">Level</div></div>
+        <div class="mini-stat"><div class="mini-stat-val" style="color:#6666aa;">0</div><div class="mini-stat-label">Attempts</div></div>
+      </div>
+      <div class="progress-row">
+        <div class="progress-row-label"><span>Progress</span><span>0%</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-blue" style="width:0%"></div></div>
+      </div>
+      <div class="course-btn btn-soon">Coming Soon 🚧</div>
+    </div>
+
+    <!-- HTML -->
+    <div class="course-card card-html">
+      <span class="coming-overlay">Coming Soon</span>
+      <div class="course-icon">💻</div>
+      <div class="course-name">HTML & Web Dev</div>
+      <div class="course-desc">Build websites from zero. Learn semantic HTML5, CSS layouts, forms, and responsive design.</div>
+      <div class="tag-list">
+        <span class="tag">HTML5</span>
+        <span class="tag">Semantic Tags</span>
+        <span class="tag">Forms</span>
+        <span class="tag">CSS Basics</span>
+        <span class="tag">Flexbox</span>
+      </div>
+      <div class="stats-row">
+        <div class="mini-stat"><div class="mini-stat-val" style="color:#6666aa;">—</div><div class="mini-stat-label">Score</div></div>
+        <div class="mini-stat"><div class="mini-stat-val" style="color:#6666aa;">—</div><div class="mini-stat-label">Level</div></div>
+        <div class="mini-stat"><div class="mini-stat-val" style="color:#6666aa;">0</div><div class="mini-stat-label">Attempts</div></div>
+      </div>
+      <div class="progress-row">
+        <div class="progress-row-label"><span>Progress</span><span>0%</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-orange" style="width:0%"></div></div>
+      </div>
+      <div class="course-btn btn-soon">Coming Soon 🚧</div>
+    </div>
+
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weak Areas — AI Tutor</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #050510; color: #e8e8f0; min-height: 100vh; }
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 240px; background: rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.07); padding: 28px 20px; display: flex; flex-direction: column; z-index: 50; }
+  .sidebar-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; margin-bottom: 36px; padding: 0 8px; }
+  .sidebar-logo span { color: #f5c842; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 12px; text-decoration: none; color: #6666aa; font-size: 0.9rem; font-weight: 500; transition: all 0.2s; margin-bottom: 4px; }
+  .nav-item:hover, .nav-item.active { background: rgba(124,58,237,0.15); color: #e8e8f0; }
+  .nav-item.active { border-left: 3px solid #7c3aed; }
+  .nav-icon { font-size: 1.1rem; width: 22px; text-align: center; }
+  .sidebar-bottom { margin-top: auto; }
+  .logout-btn { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 12px; text-decoration: none; color: #ef4444; font-size: 0.9rem; }
+  .logout-btn:hover { background: rgba(239,68,68,0.1); }
+  .main { margin-left: 240px; padding: 36px 40px; }
+  .page-header { margin-bottom: 32px; }
+  .page-header h1 { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; margin-bottom: 6px; }
+  .page-header p { color: #6666aa; }
+
+  .section-heading { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+
+  /* WEAK CARD */
+  .weak-card {
+    background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 22px; padding: 30px; margin-bottom: 20px; position: relative; overflow: hidden;
+  }
+  .weak-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg,#ef4444,#f97316); }
+  .wc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .wc-title { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+  .wc-score { background: rgba(239,68,68,0.15); color: #f87171; padding: 6px 16px; border-radius: 100px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
+
+  .wc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .wc-box { background: rgba(255,255,255,0.04); border-radius: 14px; padding: 16px; }
+  .wc-box-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #6666aa; margin-bottom: 10px; }
+
+  .tip-box {
+    background: rgba(245,200,66,0.06); border: 1px solid rgba(245,200,66,0.2);
+    border-radius: 14px; padding: 16px 20px; margin-bottom: 16px;
+  }
+  .tip-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #f5c842; margin-bottom: 8px; font-weight: 600; }
+  .tip-text { font-size: 0.88rem; color: #d4d4e8; line-height: 1.6; }
+
+  .resources-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .resource-chip {
+    background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.25);
+    color: #c4b5fd; padding: 5px 14px; border-radius: 100px; font-size: 0.78rem; font-weight: 500;
+  }
+
+  .improve-btn {
+    display: inline-block; margin-top: 16px; padding: 12px 28px;
+    background: #ef4444; color: #fff; font-family: 'Syne', sans-serif; font-weight: 700;
+    border-radius: 12px; text-decoration: none; font-size: 0.9rem;
+    box-shadow: 0 0 20px rgba(239,68,68,0.2); transition: all 0.2s;
+  }
+  .improve-btn:hover { transform: translateY(-2px); box-shadow: 0 0 35px rgba(239,68,68,0.4); }
+
+  /* STRONG CARD */
+  .strong-card {
+    background: rgba(34,197,94,0.05); border: 1px solid rgba(34,197,94,0.18);
+    border-radius: 18px; padding: 22px 26px; margin-bottom: 14px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .sc-left { display: flex; align-items: center; gap: 14px; }
+  .sc-icon { font-size: 1.7rem; }
+  .sc-name { font-family: 'Syne', sans-serif; font-weight: 700; }
+  .sc-sub { font-size: 0.8rem; color: #6666aa; margin-top: 3px; }
+  .sc-score { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; color: #22c55e; }
+
+  /* EMPTY */
+  .empty-state {
+    background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1);
+    border-radius: 20px; padding: 50px; text-align: center; color: #44446a;
+  }
+  .empty-state p { font-size: 0.9rem; margin-bottom: 16px; }
+  .empty-state a { color: #f5c842; text-decoration: none; }
+
+  .all-good {
+    background: rgba(34,197,94,0.07); border: 1px solid rgba(34,197,94,0.2);
+    border-radius: 20px; padding: 32px; text-align: center; margin-bottom: 24px;
+  }
+  .all-good h3 { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; margin-bottom: 8px; color: #22c55e; }
+  .all-good p { color: #9999cc; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">🤖 Adaptive <span>Learning Platform</span></div>
+  <nav>
+    <a href="{{ url_for('dashboard') }}" class="nav-item"><span class="nav-icon">🏠</span> Dashboard</a>
+    <a href="{{ url_for('courses') }}" class="nav-item"><span class="nav-icon">📚</span> Courses</a>
+    <a href="{{ url_for('progress') }}" class="nav-item"><span class="nav-icon">📊</span> Progress</a>
+    <a href="{{ url_for('analytics') }}" class="nav-item"><span class="nav-icon">📈</span> Analytics</a>
+    <a href="{{ url_for('weak') }}" class="nav-item active"><span class="nav-icon">🎯</span> Weak Areas</a>
+    <a href="{{ url_for('leaderboard') }}" class="nav-item"><span class="nav-icon">🏆</span> Leaderboard</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <a href="{{ url_for('logout') }}" class="logout-btn"><span>🚪</span> Logout</a>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="page-header">
+    <h1>🎯 Weak Area Analysis</h1>
+    <p>AI-powered breakdown of where you need to improve</p>
+  </div>
+
+  <!-- WEAK SUBJECTS -->
+  {% if weak_subjects %}
+    <div class="section-heading">⚠️ Needs Improvement</div>
+    {% for subj in weak_subjects %}
+    <div class="weak-card">
+      <div class="wc-header">
+        <div class="wc-title">{{ subj.icon }} {{ subj.name }}</div>
+        <div class="wc-score">{{ subj.score }}%</div>
+      </div>
+
+      <div class="wc-grid">
+        <div class="wc-box">
+          <div class="wc-box-title">Attempts Completed</div>
+          <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#f5c842;">{{ subj.attempts }}</div>
+        </div>
+        <div class="wc-box">
+          <div class="wc-box-title">Current Difficulty</div>
+          <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:#a78bfa;">
+            {% if subj.level == 1 %}Beginner{% elif subj.level == 2 %}Intermediate{% else %}Advanced{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="tip-box">
+        <div class="tip-label">🤖 AI Recommendation</div>
+        <div class="tip-text">{{ subj.tip }}</div>
+      </div>
+
+      <div class="wc-box-title" style="margin-bottom:10px;">📚 Recommended Resources</div>
+      <div class="resources-list">
+        {% for res in subj.resources %}
+        <span class="resource-chip">{{ res }}</span>
+        {% endfor %}
+      </div>
+
+      <a href="{{ url_for('aptitude') }}" class="improve-btn">Practise Now →</a>
+    </div>
+    {% endfor %}
+  {% else %}
+    {% if strong_subjects %}
+    <div class="all-good">
+      <h3>🎉 No Weak Areas Detected!</h3>
+      <p>You're performing well in all attempted subjects. Keep up the great work!</p>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <p>Complete at least one quiz to see your weak area analysis.</p>
+      <a href="{{ url_for('aptitude') }}">Start your first quiz →</a>
+    </div>
+    {% endif %}
+  {% endif %}
+
+  <!-- STRONG SUBJECTS -->
+  {% if strong_subjects %}
+  <div class="section-heading" style="margin-top:32px;">✅ Performing Well</div>
+  {% for subj in strong_subjects %}
+  <div class="strong-card">
+    <div class="sc-left">
+      <div class="sc-icon">{{ subj.icon }}</div>
+      <div>
+        <div class="sc-name">{{ subj.name }}</div>
+        <div class="sc-sub">{{ subj.attempts }} attempts · Level {{ subj.level }}/3</div>
+      </div>
+    </div>
+    <div class="sc-score">{{ subj.score }}%</div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+</main>
+</body>
+</html>
